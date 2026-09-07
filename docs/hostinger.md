@@ -7,10 +7,12 @@ Vercel. A adaptação foi testada localmente; o deploy no hPanel ainda não foi fei
 
 No hPanel, crie uma aplicação Node.js vinculada ao repositório `Dulokz/site-esj`.
 Use a raiz do repositório, Node.js 24, instalação `npm ci`, build `npm run build`,
-entrada `server.js` e inicialização `npm start` quando houver esse campo.
+entrada `app.cjs` e inicialização `npm start` quando houver esse campo.
 Selecione o tipo **Other**, com saída de build `dist`. A detecção como Vite
-estático não basta: confirme que o processo `server.js` está sendo executado.
-O pacote de execução precisa incluir `server.js`, `lib/`, `api/`, `dist/` e
+estático não basta: confirme que o processo do servidor está sendo executado.
+Cadastre `NPM_CONFIG_INCLUDE=dev` para instalar as ferramentas de build mesmo
+com `NODE_ENV=production`; sem isso o Vite pode ficar ausente na compilação.
+O pacote de execução precisa incluir `app.cjs`, `server.js`, `lib/`, `api/`, `dist/` e
 as dependências de produção; não publique apenas a pasta `dist`.
 
 A Hostinger define a porta do serviço por `PORT`; o servidor escuta em todas as
@@ -53,3 +55,5 @@ ou Hostinger. O agendamento de `npm run db:cleanup` continua sendo configuração
 operacional separada.
 
 Fonte consultada em 07/09/2026: [guia oficial da Hostinger](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/).
+
+A entrada `app.cjs` adapta o carregamento CommonJS do LiteSpeed para o servidor ESM.

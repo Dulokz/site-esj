@@ -47,7 +47,7 @@ export function createAppServer({ publicDir = defaultRoot } = {}) {
   });
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+export async function startServer() {
   await stat(resolve(defaultRoot, 'index.html'));
   const port = Number(process.env.PORT || 3000);
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('invalid_port');
@@ -64,4 +64,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   };
   process.on('SIGTERM', stop);
   process.on('SIGINT', stop);
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  startServer().catch(() => { console.error('Server startup failed'); process.exitCode = 1; });
 }
