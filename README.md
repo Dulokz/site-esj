@@ -1,16 +1,37 @@
-# React + Vite
+# Plataforma ESJ
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + Vite e funções Node na Vercel, com login administrativo, PostgreSQL,
+Embedded Signup oficial da Meta, gestão de ativos e envio de template de teste.
 
-Currently, two official plugins are available:
+```sh
+npm ci
+npm test
+npm run lint
+npm run build
+npm run dev
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**A homologação real depende de configuração externa.** Não foram cadastrados
+IDs, criados ativos, enviados templates ou efetuado deploy. Não há modo fake na
+aplicação. Testes usam PostgreSQL embutido e fixtures Meta apenas em `tests/`.
 
-## React Compiler
+Consulte [docs/meta-app-review.md](docs/meta-app-review.md) para o checklist de
+configuração Meta/Vercel, limitações e roteiro das duas permissões. Copie
+`.env.example` para `.env.local` privado; configure PostgreSQL com
+`sslmode=verify-full`, origem HTTPS e as credenciais reais no servidor.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```sh
+npm run db:migrate
+npm run admin:create
+```
 
-## Expanding the Oxlint configuration
+O provisionamento utiliza as variáveis locais `PROVISION_*`; não cria admin ou
+senha padrão. Retire essas variáveis do ambiente após uso. Nunca colocar segredo
+em `VITE_*`, frontend, logs, localStorage ou repositório.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+`npm run dev` inclui as rotas backend e lê `.env.local`. HTTP local permite revisar
+as páginas, mas as operações administrativas exigem origem HTTPS e cookie Secure.
+Use preview HTTPS Vercel para homologar. `npm run preview` é somente estático.
+
+`npm run db:cleanup` executa a retenção documentada; não há agendamento externo
+criado. A migração e a publicação não são executadas automaticamente pelo build.

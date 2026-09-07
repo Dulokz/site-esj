@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ArrowRight, MessageSquare, ShieldCheck, Sparkles } from 'lucide-react';
-import { companyInfo } from '../data/companyInfo';
+import { Menu, X, ArrowRight } from 'lucide-react';
 
 export default function Navbar({ currentRoute, navigate, openContactModal }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

@@ -6,11 +6,14 @@ import HomePage from './pages/HomePage';
 import WhatsAppPage from './pages/WhatsAppPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
+import DataDeletionPage from './pages/DataDeletionPage';
+import WhatsAppConnectPage from './pages/WhatsAppConnectPage';
 
 export default function App() {
   // Read initial route from window.location.pathname
   const getInitialRoute = () => {
     const path = window.location.pathname.toLowerCase().replace(/\/$/, '');
+    if (path === '/exclusao-de-dados' || path === '/integracoes/whatsapp/conectar') return path;
     if (path === '/whatsapp-business') return '/whatsapp-business';
     if (path === '/politica-de-privacidade') return '/politica-de-privacidade';
     if (path === '/termos-de-uso') return '/termos-de-uso';
@@ -41,6 +44,12 @@ export default function App() {
   // Update dynamic SEO page titles per route
   useEffect(() => {
     switch (currentRoute) {
+      case '/exclusao-de-dados':
+        document.title = 'Exclusão de Dados | ESJ';
+        break;
+      case '/integracoes/whatsapp/conectar':
+        document.title = 'Conectar WhatsApp Business | ESJ';
+        break;
       case '/whatsapp-business':
         document.title = 'WhatsApp Business Platform | Integrações Oficiais Cloud API - ESJ';
         break;
@@ -70,11 +79,13 @@ export default function App() {
 
       {/* Main Routed Page Content */}
       <main>
+        {currentRoute === '/exclusao-de-dados' && <DataDeletionPage navigate={navigate} />}
+        {currentRoute === '/integracoes/whatsapp/conectar' && <WhatsAppConnectPage />}
         {currentRoute === '/' && (
           <HomePage navigate={navigate} openContactModal={openContactModal} />
         )}
         {currentRoute === '/whatsapp-business' && (
-          <WhatsAppPage openContactModal={openContactModal} />
+          <WhatsAppPage openContactModal={openContactModal} navigate={navigate} />
         )}
         {currentRoute === '/politica-de-privacidade' && (
           <PrivacyPage navigate={navigate} />

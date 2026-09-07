@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Smartphone, Cloud, ShieldAlert, Cpu, Database, ArrowRight, ArrowDown, Lock, CheckCircle2 } from 'lucide-react';
+import { Smartphone, Cloud, Database, Lock, CheckCircle2 } from 'lucide-react';
 
 export default function WhatsAppFlow() {
   const [selectedNode, setSelectedNode] = useState('gateway');

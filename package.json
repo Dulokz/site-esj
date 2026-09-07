@@ -4,17 +4,23 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "test": "node --test",
+    "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.js",
+    "admin:create": "node --env-file-if-exists=.env.local scripts/provision-admin.js",
+    "db:cleanup": "node --env-file-if-exists=.env.local scripts/cleanup.js",
+    "dev": "node --env-file-if-exists=.env.local node_modules/vite/bin/vite.js",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
     "lucide-react": "^1.40.0",
+    "pg": "^8.23.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",

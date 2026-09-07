@@ -10,7 +10,6 @@ import {
   Lock, 
   Building2, 
   Mail, 
-  Phone, 
   MapPin, 
   UserCheck, 
   Globe, 
@@ -20,13 +19,12 @@ import {
   Briefcase,
   Sprout,
   Store,
-  Layers,
   FileCheck
 } from 'lucide-react';
 import WhatsAppFlow from '../components/WhatsAppFlow';
 import { companyInfo } from '../data/companyInfo';
 
-export default function WhatsAppPage({ openContactModal }) {
+export default function WhatsAppPage({ openContactModal, navigate }) {
   const [activeUseCaseTab, setActiveUseCaseTab] = useState('clinicas');
 
   const useCases = {
@@ -125,11 +123,11 @@ export default function WhatsAppPage({ openContactModal }) {
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '3.5rem' }}>
             <button 
-              onClick={openContactModal}
+              onClick={() => navigate('/integracoes/whatsapp/conectar')}
               className="btn btn-whatsapp btn-lg"
               id="wa-hero-cta"
             >
-              Fale sobre uma integração
+              Conectar WhatsApp
               <ArrowRight size={18} />
             </button>
             <a 
@@ -222,7 +220,7 @@ export default function WhatsAppPage({ openContactModal }) {
               </div>
               <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>Webhooks e APIs em Tempo Real</h3>
               <p style={{ fontSize: '0.94rem', color: 'var(--text-secondary)', lineHeight: '1.7' }}>
-                Integrações bidirecionais em milissegundos entre o WhatsApp e os softwares do cliente com validação rigorosa de assinatura criptográfica.
+                Fluxos de eventos entre o WhatsApp e os softwares do cliente, com validação de requisições prevista na implementação de cada integração.
               </p>
             </div>
 
@@ -246,7 +244,7 @@ export default function WhatsAppPage({ openContactModal }) {
               </div>
               <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>Estabilidade & Cloud Oficial</h3>
               <p style={{ fontSize: '0.94rem', color: 'var(--text-secondary)', lineHeight: '1.7' }}>
-                Uso exclusivo das rotas Cloud API oficiais, eliminando riscos de banimento de linhas, instabilidade de servidores locais ou bloqueios de número.
+                Uso das APIs oficiais da Meta. A operação depende das políticas, limites e disponibilidade da plataforma, incluindo possíveis restrições de contas e números.
               </p>
             </div>
           </div>
@@ -420,7 +418,7 @@ export default function WhatsAppPage({ openContactModal }) {
               </p>
 
               <p>
-                A plataforma utiliza mecanismos de autenticação de tokens, criptografia HTTPS/TLS em trânsito, controle rigoroso de acesso e as melhores práticas de segurança da informação para proteger integralmente as informações processadas em cada pipeline de integração.
+                A ativação de cada integração depende de autenticação, controle de acesso e armazenamento seguro de credenciais no servidor. O onboarding está em preparação e utiliza exclusivamente o fluxo oficial da Meta quando habilitado.
               </p>
             </div>
           </div>

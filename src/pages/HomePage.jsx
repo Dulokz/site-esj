@@ -5,20 +5,13 @@ import {
   Workflow, 
   Sprout, 
   LineChart, 
-  Layers, 
   ArrowRight, 
   CheckCircle, 
-  Database, 
   Zap, 
-  ShieldCheck, 
   Bot, 
   MessageSquare, 
   Sparkles,
-  Server,
-  Activity,
-  FileSpreadsheet,
-  Stethoscope,
-  Briefcase
+  FileSpreadsheet
 } from 'lucide-react';
 import TechFlowDiagram from '../components/TechFlowDiagram';
 import { companyInfo } from '../data/companyInfo';

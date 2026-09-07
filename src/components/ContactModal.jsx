@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Send, MessageCircle, Mail, Building, CheckCircle2 } from 'lucide-react';
+import { X, Send, MessageCircle, Mail, CheckCircle2 } from 'lucide-react';
 import { companyInfo } from '../data/companyInfo';
 
 export default function ContactModal({ isOpen, onClose }) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Lock, FileCheck, Building2, Mail, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { companyInfo } from '../data/companyInfo';
 
 export default function PrivacyPage({ navigate }) {
@@ -40,6 +40,8 @@ export default function PrivacyPage({ navigate }) {
 
         <div className="legal-content-card">
           <h2>1. Introdução e Compromisso</h2>
+          <p>A ESJ desenvolve soluções SaaS e integrações empresariais e pode processar dados provenientes de plataformas de terceiros. Quando uma empresa cliente autoriza uma integração, podemos tratar identificadores do portfólio empresarial, da conta do WhatsApp Business e do número, além de contatos, mensagens e eventos necessários à prestação dos serviços contratados. Cada empresa cliente é responsável pelas permissões e bases legais relativas aos seus próprios usuários.</p>
+          <p>Não vendemos dados pessoais e não utilizamos dados de mensagens para publicidade de terceiros.</p>
           <p>
             A <strong>{companyInfo.legalName}</strong> ("ESJ", "nós" ou "empresa") respeita a privacidade de seus clientes, usuários e parceiros comerciais. Esta Política de Privacidade estabelece como coletamos, utilizamos, armazenamos, processamos e protegemos os dados no contexto de nossas atividades de desenvolvimento de software, consultoria tecnológica, automação empresarial e prestação de serviços de integração com APIs corporativas, incluindo a <strong>Plataforma do WhatsApp Business (Cloud API da Meta)</strong>.
           </p>
@@ -91,13 +93,13 @@ export default function PrivacyPage({ navigate }) {
 
           <h2>5. Segurança e Medidas Técnicas de Proteção</h2>
           <p>
-            Implementamos salvaguardas técnicas e organizacionais compatíveis com os padrões do setor para proteger as informações processadas contra acessos não autorizados, interceptações, perdas ou adulterações:
+            Utilizamos controles de acesso, autenticação e boas práticas de segurança compatíveis com os serviços disponibilizados. A ativação de integrações depende da implantação dos controles necessários para proteger suas credenciais:
           </p>
           <ul>
-            <li>Criptografia de ponta a ponta durante o trânsito com protocolo seguro HTTPS/TLS;</li>
-            <li>Autenticação de API via tokens criptográficos e validação de assinaturas em tempo real em todos os webhooks recebidos;</li>
-            <li>Controle de acesso granular baseado no princípio do menor privilégio (least privilege);</li>
-            <li>Monitoramento contínuo de logs de auditoria contra tentativas de intrusão ou atividades anômalas.</li>
+            <li>Uso de HTTPS/TLS na transmissão de dados pelo site publicado;</li>
+            <li>Separação entre a interface pública e o processamento de credenciais no servidor;</li>
+            <li>Restrição de acesso aos dados e autenticação conforme a função de cada usuário e serviço;</li>
+            <li>Validação de solicitações e proteção contra autorizações indevidas.</li>
           </ul>
 
           <h2>6. Compartilhamento Restrito com Terceiros</h2>
@@ -105,7 +107,7 @@ export default function PrivacyPage({ navigate }) {
             A ESJ não compartilha dados de clientes ou de usuários finais, exceto:
           </p>
           <ul>
-            <li>Com provedores essenciais de infraestrutura em nuvem e provedores oficiais de API (como servidores de hospedagem seguros e a Meta Platforms Inc. no caso de uso da Cloud API oficial), sob acordos rigorosos de confidencialidade;</li>
+            <li>Com provedores de infraestrutura e plataformas de terceiros, incluindo a Meta, na medida necessária à prestação dos serviços autorizados, conforme os contratos e regras de proteção de dados aplicáveis. Esses provedores podem processar dados fora do Brasil, observadas as exigências legais aplicáveis;</li>
             <li>Mediante ordem judicial formal ou requisição legal emanada de autoridade pública competente.</li>
           </ul>
 
@@ -124,12 +126,13 @@ export default function PrivacyPage({ navigate }) {
             Para dados nos quais a ESJ atua como Operadora (ex.: mensagens de clientes finais do nosso contratante), as solicitações deverão ser direcionadas primariamente à empresa contratante (Controladora), prestando a ESJ o suporte técnico cabível.
           </p>
 
-          <h2>8. Canal de Comunicação do Encarregado de Dados (DPO)</h2>
+          <h2>8. Canal de Privacidade</h2>
+          <p>Para solicitar exclusão, consulte as <a href="/exclusao-de-dados">instruções de exclusão de dados</a>. Os pedidos são avaliados conforme a LGPD, incluindo as hipóteses legais de conservação.</p>
           <p>
             Para esclarecer dúvidas sobre esta Política de Privacidade ou exercer direitos previstos na LGPD, entre em contato direto com o nosso responsável pelo tratamento de dados através do e-mail:
           </p>
           <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '1rem 1.5rem', borderRadius: '8px', marginTop: '1rem' }}>
-            <div style={{ fontWeight: 600, color: '#ffffff' }}>Encarregado de Proteção de Dados (DPO / Privacidade)</div>
+            <div style={{ fontWeight: 600, color: '#ffffff' }}>Contato para solicitações de privacidade</div>
             <div style={{ color: '#93c5fd', marginTop: '0.25rem' }}>E-mail: <a href={`mailto:${companyInfo.email}`} style={{ color: '#38bdf8' }}>{companyInfo.email}</a></div>
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>{companyInfo.legalName} • {companyInfo.address.formatted}</div>
           </div>

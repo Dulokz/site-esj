@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, CheckCircle, ShieldAlert, Building2, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { companyInfo } from '../data/companyInfo';
 
 export default function TermsPage({ navigate }) {
@@ -71,11 +71,13 @@ export default function TermsPage({ navigate }) {
               <strong>Autonomia e Gestão de Contas:</strong> A titularidade da linha telefônica e a conta no Gerenciador de Negócios da Meta pertencem à empresa Contratante. A ESJ fornece o suporte de engenharia e os conectores técnicos autorizados, não respondendo por penalidades impostas pela Meta decorrentes de práticas inadequadas de envio adotadas pelo Contratante.
             </li>
             <li>
-              <strong>Sem Garantia de Ausência de Modificações de Terceiros:</strong> A disponibilidade dos serviços depende da estabilidade das APIs públicas ou privadas dos provedores de nuvem e da Meta. A ESJ compromete-se a manter seu gateway atualizado e operacional conforme os mais elevados padrões técnicos.
+              <strong>Mudanças e disponibilidade de terceiros:</strong> APIs, permissões, limites, preços e funcionalidades da Meta e de outros provedores podem mudar, ser suspensos ou descontinuados, exigindo adaptações ou nova autorização. A disponibilidade, manutenção e suporte da ESJ seguem o contrato aplicável, sem garantia de operação ininterrupta.
             </li>
           </ul>
 
           <h2>4. Propriedade Intelectual</h2>
+          <p>O onboarding será realizado pelo fluxo oficial da Meta, mediante autorização de um representante habilitado da empresa cliente. A ESJ não solicita a senha da conta Meta. A coexistência com o WhatsApp Business App depende de elegibilidade e disponibilidade pela Meta e não é garantida.</p>
+          <p>É proibido utilizar a plataforma para spam, fraude, acesso não autorizado, coleta abusiva de dados ou outras práticas ilícitas. O uso abusivo pode resultar em suspensão da integração, conforme o contrato e a legislação aplicável.</p>
           <p>
             Exceto quando expressamente disposto em contrato específico de cessão de direitos de código sob medida:
           </p>
@@ -95,13 +97,14 @@ export default function TermsPage({ navigate }) {
           </ul>
 
           <h2>6. Limitação de Responsabilidade</h2>
+          <p>O cliente deve limitar o acesso a pessoas autorizadas e comunicar suspeitas de comprometimento. A ESJ adota controles de acesso, autenticação e boas práticas de segurança compatíveis com os serviços. O tratamento de dados segue a LGPD e a <a href="/politica-de-privacidade">Política de Privacidade</a>.</p>
           <p>
             A ESJ empenha seus melhores esforços e metodologias ágeis de engenharia para assegurar a estabilidade, segurança e disponibilidade de suas plataformas. Todavia, a empresa não se responsabiliza por:
           </p>
           <ul>
             <li>Interrupções provocadas por falhas de conectividade da internet global ou indisponibilidade de serviços de terceiros (ex.: instabilidades na Meta Cloud API ou concessionárias de telecomunicação);</li>
             <li>Uso indevido das ferramentas por operadores não capacitados do Contratante;</li>
-            <li>Perdas indiretas, lucros cessantes ou danos hipotéticos não decorrentes de dolo comprovado da ESJ.</li>
+            <li>Consequências de eventos de terceiros fora do seu controle, observadas as responsabilidades previstas no contrato e na legislação aplicável.</li>
           </ul>
 
           <h2>7. Modificações dos Termos</h2>
@@ -111,11 +114,11 @@ export default function TermsPage({ navigate }) {
 
           <h2>8. Legislação Aplicável e Foro</h2>
           <p>
-            Estes Termos de Uso são regidos e interpretados em conformidade com as leis da República Federativa do Brasil. Para dirimir quaisquer litígios oriundos deste instrumento, fica eleito o Foro da Comarca da sede da {companyInfo.legalName}, com renúncia expressa a qualquer outro, por mais privilegiado que seja.
+            Estes Termos são regidos pelas leis da República Federativa do Brasil, incluindo a LGPD. Eventuais controvérsias observarão o foro e os direitos previstos na legislação aplicável e no contrato firmado com a ESJ.
           </p>
 
           <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-subtle)', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Dúvidas sobre estes termos? Contate nossa equipe jurídica e administrativa pelo e-mail: <a href={`mailto:${companyInfo.email}`} style={{ color: '#93c5fd' }}>{companyInfo.email}</a>.
+            Dúvidas sobre estes termos? Contate a ESJ pelo e-mail: <a href={`mailto:${companyInfo.email}`} style={{ color: '#93c5fd' }}>{companyInfo.email}</a>.
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Shield, FileText, ArrowUpRight, Cpu, Building2, UserCheck } from 'lucide-react';
+import { Mail, MapPin, Shield, FileText, Building2, UserCheck } from 'lucide-react';
 import { companyInfo } from '../data/companyInfo';
 
 export default function Footer({ navigate, openContactModal }) {
@@ -88,6 +88,7 @@ export default function Footer({ navigate, openContactModal }) {
           <div>
             <h4 className="footer-col-title">Privacidade & Termos</h4>
             <ul className="footer-links">
+              <li><a className="footer-link" href="/exclusao-de-dados" onClick={(e) => handleNav(e, '/exclusao-de-dados', null)}>Exclusão de Dados</a></li>
               <li>
                 <a href="/politica-de-privacidade" onClick={(e) => handleNav(e, '/politica-de-privacidade', null)} className="footer-link">
                   <Shield size={14} />

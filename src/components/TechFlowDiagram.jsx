@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, Server, Network, Sparkles, Workflow, CheckCircle2, ChevronRight, ArrowRight } from 'lucide-react';
+import { Building2, Server, Network, Sparkles, Workflow, CheckCircle2, ArrowRight } from 'lucide-react';
 
 export default function TechFlowDiagram() {
   const steps = [
