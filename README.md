@@ -31,7 +31,15 @@ em `VITE_*`, frontend, logs, localStorage ou repositório.
 
 `npm run dev` inclui as rotas backend e lê `.env.local`. HTTP local permite revisar
 as páginas, mas as operações administrativas exigem origem HTTPS e cookie Secure.
-Use preview HTTPS Vercel para homologar. `npm run preview` é somente estático.
+Use um ambiente HTTPS para homologar. `npm run preview` é somente estático.
 
 `npm run db:cleanup` executa a retenção documentada; não há agendamento externo
 criado. A migração e a publicação não são executadas automaticamente pelo build.
+
+## Servidor Node.js / Hostinger
+
+Ap�s `npm run build`, execute `npm start`. O servidor `server.js` atende `dist/`
+e as APIs na mesma origem, escuta em `0.0.0.0` e respeita `PORT` (padr�o 3000).
+Use Node.js 24 na hospedagem. N�o use `vite preview` como backend.
+
+Consulte [docs/hostinger.md](docs/hostinger.md) para publicar e configurar o banco.
