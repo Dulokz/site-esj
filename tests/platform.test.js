@@ -13,11 +13,16 @@ import {completeSignup,disconnectConnection,isSimpleTemplate,readManagement,send
 import {verifySignature,webhookRecords} from '../lib/meta/webhook.js';
 import {parseMetaEvent} from '../src/lib/meta/embedded-signup.js';
 import {api} from '../lib/platform/api.js';
+import {getMetaConfig} from '../lib/meta/config.js';
+import {runtimeConfig} from '../lib/platform/config.js';
+import {exchangeAuthorizationCode} from '../lib/meta/graph-api.js';
+import callbackHandler from '../api/meta/whatsapp/callback.js';
 
 let engine,db,context,other,sessionCookie;
 const savedEnv={...process.env};
 before(async()=>{
-  Object.assign(process.env,{DATABASE_URL:'test-only-not-a-server',APP_ORIGIN:'https://example.test',META_APP_ID:'1',META_CONFIG_ID:'2',META_APP_SECRET:'test-only-app-secret',META_GRAPH_API_VERSION:'v1.0',META_REDIRECT_URI:'https://example.test/api/meta/whatsapp/callback',META_WEBHOOK_VERIFY_TOKEN:'test-only-verify',META_TOKEN_ENCRYPTION_KEY:randomBytes(32).toString('base64'),META_EMBEDDED_SIGNUP_EXTRAS:'{"feature":"test-only"}'});
+  Object.assign(process.env,{DATABASE_URL:'test-only-not-a-server',APP_ORIGIN:'https://example.test',META_APP_ID:'1',META_CONFIG_ID:'2',META_APP_SECRET:'test-only-app-secret',META_GRAPH_API_VERSION:'v1.0',META_WEBHOOK_VERIFY_TOKEN:'test-only-verify',META_TOKEN_ENCRYPTION_KEY:randomBytes(32).toString('base64'),META_EMBEDDED_SIGNUP_EXTRAS:'{"feature":"test-only"}'});
+  delete process.env.META_REDIRECT_URI;
   engine=new PGlite();
   await engine.exec(await readFile(new URL('../db/001-platform.sql',import.meta.url),'utf8'));
   db={query:async(sql,values)=>{const result=await engine.query(sql,values);return {...result,rowCount:result.affectedRows || result.rows.length};},connect:async()=>({...db,release(){}})};
@@ -203,3 +208,32 @@ test('ambiguous external send is durable and never retried automatically',async(
   assert.equal((await db.query('SELECT status FROM message_requests WHERE id=$1',[body.requestId])).rows[0].status,'unknown');
 });
 
+
+test('SDK configuration needs no redirect URI and retains canonical HTTPS origin validation',()=>{
+  assert.ok(runtimeConfig());
+  const config=getMetaConfig(process.env);
+  assert.equal(config.origin,'https://example.test');
+  assert.equal('redirectUri' in config,false);
+  assert.deepEqual(getMetaConfig({...process.env,META_REDIRECT_URI:'https://legacy.test/callback'}),config);
+  for(const origin of ['', 'http://example.test', 'https://example.test/', 'https://example.test/path', 'https://user:pass@example.test', 'https://example.test?x=1', 'https://example.test#x']) {
+    assert.equal(getMetaConfig({...process.env,APP_ORIGIN:origin}),null);
+  }
+});
+test('SDK code exchange omits redirect_uri even with legacy configuration',async()=>{
+  const config={...getMetaConfig(process.env),redirectUri:'https://legacy.test/callback'};
+  const result=await exchangeAuthorizationCode('test-only-code',config,async(url,options)=>{
+    assert.equal(url,'https://graph.facebook.com/v1.0/oauth/access_token');
+    assert.deepEqual(Object.fromEntries(options.body),{client_id:'1',client_secret:'test-only-app-secret',code:'test-only-code'});
+    assert.equal(options.body.has('redirect_uri'),false);
+    assert.equal(options.method,'POST');
+    return {ok:true,json:async()=>({access_token:'test-only-token'})};
+  });
+  assert.equal(result.accessToken,'test-only-token');
+});
+test('Embedded Signup callback remains POST-only, rejecting OAuth GET',async()=>{
+  const headers={};
+  const res={setHeader(key,value){headers[key]=value;},end(value){this.body=JSON.parse(value);}};
+  await callbackHandler({method:'GET',url:'/api/meta/whatsapp/callback?code=test',headers:{}},res);
+  assert.equal(res.statusCode,405);
+  assert.equal(headers.Allow,'POST');
+});

@@ -66,7 +66,6 @@ se a seção citada não aparecer, confirmar o app/caso de uso antes de prossegu
 | `META_EMBEDDED_SIGNUP_EXTRAS` | Código oficial de lançamento gerado/indicado para essa configuração no Builder/documentação Meta | Apenas o objeto JSON `extras`, preservando a versão/feature oficial; não copiar App Secret |
 | `META_GRAPH_API_VERSION` | Versão suportada indicada no dashboard/documentação do app e no exemplo SDK atual | Valor no formato `vN.N`; não foi escolhida uma versão fictícia |
 | `APP_ORIGIN` | Domínio HTTPS canônico onde este backend/frontend serão publicados | `https://eduardosj.com.br` se esse for o domínio do ambiente, sem barra final |
-| `META_REDIRECT_URI` | Facebook Login for Business → Settings → Valid OAuth Redirect URIs e configuração do app | URI exata compatível com o lançamento adotado; prevista: `https://eduardosj.com.br/api/meta/whatsapp/callback` |
 | `META_WEBHOOK_VERIFY_TOKEN` | Gerar um segredo aleatório; app → WhatsApp → Configuration → Webhook → Edit | Mesmo segredo no campo Verify token da Meta e no ambiente do servidor |
 | `META_TOKEN_ENCRYPTION_KEY` | Gerar localmente com gerenciador de segredos / CSPRNG | Exatamente 32 bytes aleatórios codificados em base64; guardar backup seguro |
 | `DATABASE_URL` | Neon → projeto → Connect, ou Supabase → projeto → Connect → pooler; PostgreSQL equivalente também serve | URL PostgreSQL de backend com TLS e verificação de certificado |
@@ -77,12 +76,28 @@ Se o snippet oficial atual tiver estrutura diferente, adaptar o parser e o liste
 com base nesse snippet antes de habilitar. Isso é especialmente relevante na
 transição de versões do Embedded Signup.
 
-**Redirect URI:** o código atual usa o SDK e callback JSON POST da ESJ, não OAuth
-GET por redirecionamento. A troca inclui `META_REDIRECT_URI`. Validar que essa URI
-é a exigida para o código emitido pela configuração SDK do app. Não transformar
-a rota em GET ou alterar parâmetros por tentativa. Se a configuração SDK atual
-dispensar `redirect_uri` na troca, adequar `graph-api.js` segundo a documentação
-daquela configuração antes da homologação. Não há fallback inseguro implementado.
+**Redirect URI (revisado em 07/09/2026):** neste fluxo, `FB.login` retorna
+`authResponse.code`, e o frontend combina esse código com os ativos recebidos por
+`WA_EMBEDDED_SIGNUP` e envia JSON por POST para `/api/meta/whatsapp/callback`.
+O lançamento não informa `redirect_uri`. A etapa 1 da documentação oficial de
+[onboarding para Tech Providers](https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/onboarding-customers-as-a-tech-provider)
+lista apenas `client_id`, `client_secret` e `code` para a troca. Portanto a troca
+omite `redirect_uri`; `META_REDIRECT_URI` foi removida do contrato e do template.
+Uma variável antiga no ambiente é ignorada. Não há URL de retorno a preencher
+nessa variável, nem callback OAuth GET: a rota da ESJ continua somente POST JSON.
+A documentação exemplifica GET ao endpoint Graph `/oauth/access_token`; o código
+mantém o POST servidor a servidor existente, com os parâmetros no corpo, sem
+segredos na URL. Esse transporte ainda requer homologação com a API real.
+
+Isso não elimina as configurações do painel: a documentação de
+[implementação do SDK](https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/implementation/)
+exige cadastrar o domínio HTTPS que hospeda o fluxo em **Allowed domains** e
+**Valid OAuth redirect URIs**, e habilitar **Login with the JavaScript SDK** nas
+configurações de Facebook Login for Business. Para produção no domínio ESJ,
+confirmar `https://eduardosj.com.br` como domínio de lançamento. O nome do campo
+no painel não torna o endpoint POST da ESJ um destino de redirect OAuth.
+`APP_ORIGIN` continua obrigatório, como origem HTTPS canônica sem barra final,
+para a validação de origem das requisições ao backend.
 
 **Painel Meta, além das variáveis:**
 
@@ -257,9 +272,11 @@ carga/locks no PostgreSQL externo nem a API real. Vercel functions têm duraçã
 configurada em 120 s; conferir suporte no plano. Cada chamada Graph limita 15 s.
 Consultas de ativos paginam até 10 páginas e falham explicitamente além disso.
 
-Documentação Meta consultada em 07/09/2026: páginas principais retornaram HTTP 429.
+Documentação Meta consultada em 07/09/2026: as páginas de implementação e
+onboarding para Tech Providers foram acessadas pelo navegador, após HTTP 429
+na consulta inicial. O contrato sem redirect_uri foi confirmado nessas páginas.
 A coleção oficial Meta no Postman confirmou introspecção/escopos e mensageria;
-os detalhes de versão, snippet SDK, redirect_uri, batch e owner_business_info
+os detalhes de versão/configuração do app, batch e owner_business_info
 precisam ser confirmados com o app real antes da ativação. Não há fallback que
 ignore validações se um campo estiver indisponível. O telefone institucional
 original aparenta ser provisório; confirmar cadastro e funcionamento do e-mail.
@@ -267,6 +284,7 @@ original aparenta ser provisório; confirmar cadastro e funcionamento do e-mail.
 Referências primárias:
 
 - https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/implementation/
+- https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/onboarding-customers-as-a-tech-provider
 - https://developers.meta.com/resources/videos/unified-onboarding-whatsapp/
 - https://www.postman.com/meta/whatsapp-business-platform/request/i1mz7w8/debug-token
 - https://www.postman.com/meta/whatsapp-business-platform/documentation/wlk6lh4/whatsapp-cloud-api
