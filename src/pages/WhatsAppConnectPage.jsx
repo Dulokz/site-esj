@@ -1,7 +1,7 @@
 import { useEffect,useRef,useState } from 'react';
 import { ArrowRight,LockKeyhole,MessageCircle,Info } from 'lucide-react';
 import ConnectionStatus from '../components/ConnectionStatus';
-import { apiRequest,loadMetaSDK,launchMetaSignup } from '../lib/meta/embedded-signup';
+import { apiRequest,loadMetaSDK,launchMetaSignup,metaSignupDiagnostic } from '../lib/meta/embedded-signup';
 import { errorMessage } from '../lib/meta/errors';
 import WhatsAppAdmin from '../components/WhatsAppAdmin';
 import { companyInfo } from '../data/companyInfo';
@@ -42,13 +42,20 @@ export default function WhatsAppConnectPage(){
       // Call before any await to preserve the browser user gesture for the Meta popup.
       const result=await launchMetaSignup(prepared,flow.current.signal);
       setMessage('Validando autorização e ativos no servidor…');
-      await apiRequest('/api/meta/whatsapp/callback',result);
+      metaSignupDiagnostic('callback_post_attempt',{payload:{statePresent:Boolean(result.state),codePresent:Boolean(result.code),wabaIdPresent:Boolean(result.waba_id),phoneNumberIdPresent:Boolean(result.phone_number_id),signupMode:result.signup_mode}});
+      try {
+        await apiRequest('/api/meta/whatsapp/callback',result,undefined,({status,ok})=>metaSignupDiagnostic('callback_http_response',{status,ok}));
+      } catch(error) {
+        metaSignupDiagnostic('callback_post_error',{error:typeof error?.code==='string'?error.code:'request_failed',status:Number.isInteger(error?.status)?error.status:null});
+        throw error;
+      }
       const status=await refresh();
       setMessage(status.status==='connected'?'Conexão validada e salva para sua empresa.':'A autorização foi salva. O número ainda aguarda conclusão; use “Validar novamente”.');
     }catch(error){
       setMessage(errorMessage(error));
       if(['signup_cancelled','signup_timeout','meta_signup_failed','sdk_unavailable'].includes(error.code)){
-        try{await apiRequest('/api/meta/whatsapp/callback',{state:prepared.state,error:'cancelled'});}catch{/* The attempt may have expired; never retry code exchange. */}
+        metaSignupDiagnostic('callback_cancel_post_attempt',{statePresent:Boolean(prepared.state)});
+        try{await apiRequest('/api/meta/whatsapp/callback',{state:prepared.state,error:'cancelled'},undefined,({status,ok})=>metaSignupDiagnostic('callback_cancel_http_response',{status,ok}));}catch(cancelError){metaSignupDiagnostic('callback_cancel_post_error',{error:typeof cancelError?.code==='string'?cancelError.code:'request_failed',status:Number.isInteger(cancelError?.status)?cancelError.status:null});}
       }
       try{await refresh();}catch{/* Keep the original sanitized error. */}
     }finally{flow.current=null;setFlowActive(false);setPrepared(null);setBusy(false);}

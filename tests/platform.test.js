@@ -136,6 +136,12 @@ test('real SQL callback pipeline persists encrypted connection; rejects duplicat
   assert.equal((await db.query('SELECT id FROM credentials WHERE id=$1',[row.credential_reference])).rowCount,0);
   assert.equal((await db.query("SELECT id FROM audit_events WHERE tenant_id=$1 AND event='connection_disconnected'",[context.tenantId])).rowCount,1);
 });
+test('coexistence callback resolves the sole validated WABA phone when Meta omits its id',async(t)=>{
+  t.mock.method(globalThis,'fetch',metaFetch());
+  const state=await createSignupAttempt(context,signupStore(db));
+  const result=await completeSignup({db,context,body:{state,code:'test-only-code',waba_id:'111',signup_mode:'coexistence'}});
+  assert.equal(result.connection.phoneNumberId,'222');
+});
 test('callback failure is audited without storing code or Meta error text',async()=>{
   const state=await createSignupAttempt(context,signupStore(db));
   await assert.rejects(completeSignup({db,context,body:{state,error:'access_denied'}}),{code:'meta_authorization_cancelled'});
@@ -161,11 +167,14 @@ test('webhook signature is computed over exact bytes; records have no message co
   const first=webhookRecords(payload),second=webhookRecords(payload);
   assert.equal(first[0].eventHash,second[0].eventHash);assert.equal(JSON.stringify(first).includes('private'),false);
 });
-test('SDK event origin, opener, expected popup and payload are enforced',()=>{
+test('SDK event exact origin, stable source and current payload variants are enforced',()=>{
   const root={},popup={opener:root};popup.top=popup;
   const data=JSON.stringify({type:'WA_EMBEDDED_SIGNUP',event:'FINISH',data:{waba_id:'111',phone_number_id:'222'}});
   const event={origin:'https://www.facebook.com',source:popup,data};
   assert.ok(parseMetaEvent(event,root));
+  assert.ok(parseMetaEvent({...event,source:{}},root));
+  assert.ok(parseMetaEvent({...event,data:JSON.parse(data)},root));
+  assert.ok(parseMetaEvent({...event,data:JSON.stringify({type:'WA_EMBEDDED_SIGNUP',event:'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',data:{waba_id:'111'}})},root));
   assert.equal(parseMetaEvent({...event,origin:'https://facebook.com.attacker.test'},root),null);
   assert.equal(parseMetaEvent(event,root,{}),null);
   assert.equal(parseMetaEvent({...event,data:'not-json'},root),null);
