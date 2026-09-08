@@ -910,6 +910,14 @@ p {
 .onboarding-steps li > span { flex: 0 0 36px; height: 36px; display: grid; place-items: center; border: 1px solid #334155; border-radius: 50%; color: #6ee7b7; font-family: var(--font-mono); }
 .onboarding-action { border-color: rgba(16,185,129,.3); }
 .onboarding-action form .form-input { margin-bottom: 1rem; }
+.signup-mode-options { border: 0; padding: 0; margin: 1.25rem 0; display: grid; gap: .75rem; }
+.signup-mode-options legend { font-weight: 600; margin-bottom: .5rem; }
+.signup-mode-options label { display: flex; gap: .75rem; cursor: pointer; padding: 1rem; border: 1px solid var(--border-card); border-radius: var(--radius-md); }
+.signup-mode-options label.selected { border-color: #34d399; background: rgba(16,185,129,.08); }
+.signup-mode-options input { margin-top: .25rem; }
+.signup-mode-options span { display: grid; gap: .3rem; }
+.signup-mode-options em { color: #6ee7b7; font-size: .8rem; font-style: normal; font-weight: 700; text-transform: uppercase; }
+.signup-mode-options small { color: var(--text-secondary); line-height: 1.4; }
 .onboarding-action .btn + .btn { margin-top: .8rem; }
 .whatsapp-admin { margin-top: 2rem; }
 .whatsapp-admin h3 { margin: 1.5rem 0 1rem; }
@@ -920,6 +928,11 @@ p {
 .admin-table { overflow-x: auto; margin: 1.5rem 0; }
 .admin-table table { width: 100%; border-collapse: collapse; text-align: left; }
 .admin-table th, .admin-table td { padding: .8rem; border-bottom: 1px solid var(--border-card); }
+.connection-diagnostics { margin: 1rem 0; padding: 1rem; border: 1px solid var(--border-card); border-radius: var(--radius-md); }
+.connection-diagnostics h3 { margin: 0 0 .75rem; }
+.connection-diagnostics dl { display: grid; grid-template-columns: minmax(130px, 1fr) 2fr; gap: .45rem .75rem; margin: 0; }
+.connection-diagnostics dt { color: var(--text-muted); }
+.connection-diagnostics dd { margin: 0; overflow-wrap: anywhere; }
 .connection-status--pending, .connection-status--reauthorization_required { color: #fcd34d; }
 .onboarding-action .btn { width: 100%; white-space: normal; }
 .connection-status { display: inline-flex; align-items: center; gap: .5rem; padding: .4rem .75rem; border: 1px solid currentColor; border-radius: 999px; margin: .3rem 0 1.25rem; font-size: .82rem; color: #cbd5e1; }

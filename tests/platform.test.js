@@ -17,6 +17,9 @@ import {getMetaConfig} from '../lib/meta/config.js';
 import {runtimeConfig} from '../lib/platform/config.js';
 import {exchangeAuthorizationCode} from '../lib/meta/graph-api.js';
 import callbackHandler from '../api/meta/whatsapp/callback.js';
+import { startSignup } from '../api/meta/whatsapp/signup/start.js';
+import { persistWebhookRecords } from '../api/meta/whatsapp/webhook.js';
+import { signupExtras } from '../lib/platform/config.js';
 
 let engine,db,context,other,sessionCookie;
 const savedEnv={...process.env};
@@ -25,6 +28,7 @@ before(async()=>{
   delete process.env.META_REDIRECT_URI;
   engine=new PGlite();
   await engine.exec(await readFile(new URL('../db/001-platform.sql',import.meta.url),'utf8'));
+  await engine.exec(await readFile(new URL('../db/002-whatsapp-coexistence.sql',import.meta.url),'utf8'));
   db={query:async(sql,values)=>{const result=await engine.query(sql,values);return {...result,rowCount:result.affectedRows || result.rows.length};},connect:async()=>({...db,release(){}})};
   async function tenant(){
     const tenantId=randomUUID(),userId=randomUUID();
@@ -92,7 +96,7 @@ test('credential encryption authenticates tenant and rejects tampering',async()=
   await vault.delete(context.tenantId,reference);
 });
 
-function metaFetch({invalidToken=false,invalidWaba=false,invalidPhone=false,metaError=false}={}){
+function metaFetch({invalidToken=false,invalidWaba=false,invalidPhone=false,metaError=false,phoneStatus='CONNECTED',isOnBizApp=true,platformType='CLOUD_API',onRegister}={}){
   return async(url,options)=>{
     assert.equal(String(url).includes('test-only-secret'),false);
     const path=new URL(url).pathname;
@@ -100,7 +104,9 @@ function metaFetch({invalidToken=false,invalidWaba=false,invalidPhone=false,meta
     if(metaError)return {ok:false,json:async()=>({error:{message:'test-only-secret',code:190}})};
     if(path.endsWith('/oauth/access_token'))body={access_token:'test-only-secret'};
     else if(path==='/v1.0/')body=[{code:200,body:JSON.stringify({data:{is_valid:!invalidToken,app_id:'1',scopes:['whatsapp_business_management','whatsapp_business_messaging'],granular_scopes:[{scope:'whatsapp_business_management',target_ids:invalidWaba?[]:['111']}],expires_at:Math.floor(Date.now()/1000)+3600}})}];
-    else if(path.endsWith('/111/phone_numbers'))body={data:invalidPhone?[]:[{id:'222',display_phone_number:'+15550000000',status:'CONNECTED'}]};
+    else if(path.endsWith('/111/phone_numbers'))body={data:invalidPhone?[]:[{id:'222',display_phone_number:'+15550000000',status:phoneStatus}]};
+    else if(path.endsWith('/222/register')){onRegister?.();body={success:true};}
+    else if(path.endsWith('/222'))body={id:'222',is_on_biz_app:isOnBizApp,platform_type:platformType};
     else if(path.endsWith('/111/subscribed_apps'))body={success:true};
     else if(path.endsWith('/111/message_templates'))body={data:[{id:'444',name:'test_template',language:'pt_BR',status:'APPROVED',components:[{type:'BODY',text:'Test template text'}]}]};
     else if(path.endsWith('/222/messages'))body={messages:[{id:'test-wamid'}]};
@@ -121,7 +127,7 @@ test('Graph validation rejects invalid token, WABA, number, and sanitizes Meta e
 test('real SQL callback pipeline persists encrypted connection; rejects duplicate and tenant hopping',async(t)=>{
   t.mock.method(globalThis,'fetch',metaFetch());
   const state=await createSignupAttempt(context,signupStore(db));
-  const body={state,code:'test-only-code',waba_id:'111',phone_number_id:'222'};
+  const body={state,code:'test-only-code',waba_id:'111',phone_number_id:'222',signup_mode:'cloud_api'};
   await assert.rejects(completeSignup({body,db,context:other}),{code:'invalid_state'});
   const result=await completeSignup({body,db,context});
   assert.equal(result.status,'connected');
@@ -136,11 +142,50 @@ test('real SQL callback pipeline persists encrypted connection; rejects duplicat
   assert.equal((await db.query('SELECT id FROM credentials WHERE id=$1',[row.credential_reference])).rowCount,0);
   assert.equal((await db.query("SELECT id FROM audit_events WHERE tenant_id=$1 AND event='connection_disconnected'",[context.tenantId])).rowCount,1);
 });
+test('signup mode is server-validated, persisted, and selects the official coexistence extras',async()=>{
+  const started=await startSignup({db,context,body:{signupMode:'coexistence'}});
+  assert.equal(started.signupMode,'coexistence');
+  assert.deepEqual(started.extras,{setup:{},featureType:'whatsapp_business_app_onboarding',sessionInfoVersion:'3'});
+  assert.equal((await db.query('SELECT signup_mode FROM signup_attempts WHERE state_hash=$1',[hash(started.state)])).rows[0].signup_mode,'coexistence');
+  assert.deepEqual(signupExtras(runtimeConfig(),'coexistence'),started.extras);
+  await assert.rejects(startSignup({db,context,body:{signupMode:'standard'}}),{code:'invalid_signup_mode'});
+  await assert.rejects(startSignup({db,context,body:{}}),{code:'invalid_signup_mode'});
+});
 test('coexistence callback resolves the sole validated WABA phone when Meta omits its id',async(t)=>{
   t.mock.method(globalThis,'fetch',metaFetch());
-  const state=await createSignupAttempt(context,signupStore(db));
+  const state=await createSignupAttempt(context,signupStore(db),'coexistence');
   const result=await completeSignup({db,context,body:{state,code:'test-only-code',waba_id:'111',signup_mode:'coexistence'}});
   assert.equal(result.connection.phoneNumberId,'222');
+  assert.equal(result.connection.signupMode,'coexistence');
+  assert.equal(result.connection.isOnBizApp,true);
+  assert.equal(result.connection.platformType,'CLOUD_API');
+});
+test('a callback cannot switch the persisted signup mode',async()=>{
+  for (const [startedMode,returnedMode] of [['cloud_api','coexistence'],['coexistence','cloud_api']]) {
+    const state=await createSignupAttempt(context,signupStore(db),startedMode);
+    await assert.rejects(completeSignup({db,context,body:{state,code:'test-only-code',waba_id:'111',phone_number_id:'222',signup_mode:returnedMode}}),{code:'signup_mode_mismatch'});
+    assert.equal((await db.query('SELECT outcome FROM signup_attempts WHERE state_hash=$1',[hash(state)])).rows[0].outcome,'failed');
+  }
+});
+test('coexistence fails closed when Graph cannot prove the Business App and Cloud API platform',async(t)=>{
+  for (const options of [{isOnBizApp:false},{platformType:'ON_PREMISE'}]) {
+    t.mock.method(globalThis,'fetch',metaFetch(options));
+    const state=await createSignupAttempt(context,signupStore(db),'coexistence');
+    await assert.rejects(completeSignup({db,context,body:{state,code:'test-only-code',waba_id:'111',signup_mode:'coexistence'}}),{code:'coexistence_not_confirmed'});
+    t.mock.restoreAll();
+  }
+});
+test('coexistence never registers a number and Cloud API still registers when required',async(t)=>{
+  let coexistenceRegisters=0,cloudRegisters=0;
+  t.mock.method(globalThis,'fetch',metaFetch({phoneStatus:'PENDING',onRegister:()=>coexistenceRegisters++}));
+  const coexistenceState=await createSignupAttempt(context,signupStore(db),'coexistence');
+  await completeSignup({db,context,body:{state:coexistenceState,code:'test-only-code',waba_id:'111',signup_mode:'coexistence'}});
+  assert.equal(coexistenceRegisters,0);
+  t.mock.restoreAll();
+  t.mock.method(globalThis,'fetch',metaFetch({phoneStatus:'PENDING',onRegister:()=>cloudRegisters++}));
+  const cloudState=await createSignupAttempt(context,signupStore(db),'cloud_api');
+  await completeSignup({db,context,body:{state:cloudState,code:'test-only-code',waba_id:'111',phone_number_id:'222',signup_mode:'cloud_api'}});
+  assert.equal(cloudRegisters,1);
 });
 test('callback failure is audited without storing code or Meta error text',async()=>{
   const state=await createSignupAttempt(context,signupStore(db));
@@ -167,6 +212,24 @@ test('webhook signature is computed over exact bytes; records have no message co
   const first=webhookRecords(payload),second=webhookRecords(payload);
   assert.equal(first[0].eventHash,second[0].eventHash);assert.equal(JSON.stringify(first).includes('private'),false);
 });
+test('webhooks persist smb echoes and PARTNER_REMOVED without retaining payload content',async()=>{
+  const payload={object:'whatsapp_business_account',entry:[{id:'111',changes:[
+    {field:'smb_message_echoes',value:{metadata:{phone_number_id:'222'},smb_message_echoes:[{id:'echo-1',text:{body:'private echo'}}]}},
+    {field:'history',value:{metadata:{phone_number_id:'222'},messages:[{text:{body:'history'}}]}},
+    {field:'smb_app_state_sync',value:{metadata:{phone_number_id:'222'},state:'SYNCED'}},
+    {field:'account_update',value:{event:'PARTNER_REMOVED',sensitive:'not stored'}},
+  ]}]};
+  const records=webhookRecords(payload);
+  assert.deepEqual(records.map((item)=>item.kind),['smb_message_echo','history','smb_app_state_sync','account_update']);
+  assert.equal(JSON.stringify(records).includes('private'),false);
+  await persistWebhookRecords(db,records);
+  const persisted=await db.query("SELECT kind,delivery_status FROM webhook_events WHERE connection_id IN (SELECT id FROM whatsapp_connections WHERE tenant_id=$1) ORDER BY received_at DESC",[context.tenantId]);
+  assert.ok(persisted.rows.some((row)=>row.kind==='smb_message_echo'));
+  assert.ok(persisted.rows.some((row)=>row.kind==='account_update' && row.delivery_status==='PARTNER_REMOVED'));
+  assert.equal((await db.query("SELECT status FROM whatsapp_connections WHERE tenant_id=$1 AND phone_number_id='222'",[context.tenantId])).rows[0].status,'reauthorization_required');
+  const foreign=await db.query("SELECT count(*)::int AS count FROM webhook_events WHERE tenant_id=$1",[other.tenantId]);
+  assert.equal(foreign.rows[0].count,0);
+});
 test('SDK event exact origin, stable source and current payload variants are enforced',()=>{
   const root={},popup={opener:root};popup.top=popup;
   const data=JSON.stringify({type:'WA_EMBEDDED_SIGNUP',event:'FINISH',data:{waba_id:'111',phone_number_id:'222'}});
@@ -190,7 +253,7 @@ test('management and message endpoints use tenant credential; duplicate sends ar
   const fixture=metaFetch();
   t.mock.method(globalThis,'fetch',async(url,options)=>{if(new URL(url).pathname.endsWith('/messages'))sends++;return fixture(url,options);});
   const state=await createSignupAttempt(context,signupStore(db));
-  const result=await completeSignup({db,context,body:{state,code:'test-code',waba_id:'111',phone_number_id:'222'}});
+  const result=await completeSignup({db,context,body:{state,code:'test-code',waba_id:'111',phone_number_id:'222',signup_mode:'cloud_api'}});
   const connectionId=result.connection.id;
   const assets=await readManagement({db,context,body:{connectionId}});
   assert.equal(assets.waba.id,'111');assert.equal(assets.templates[0].canTest,true);

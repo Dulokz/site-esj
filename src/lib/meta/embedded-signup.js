@@ -96,7 +96,8 @@ export function launchMetaSignup(config, signal) {
       if(payload.event==='ERROR') return fail('meta_signup_failed');
       const phoneNumberId=payload.data.phone_number_id;
       metaSignupDiagnostic('signup_assets_received',{wabaId:payload.data.waba_id,phoneNumberId:phoneNumberId||null,wabaIdPresent:true,phoneNumberIdPresent:Boolean(phoneNumberId)});
-      assets={waba_id:payload.data.waba_id,signup_mode:payload.event==='FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'?'coexistence':'standard'};
+      assets={waba_id:payload.data.waba_id,signup_mode:payload.event==='FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'?'coexistence':'cloud_api'};
+      if (assets.signup_mode !== config.signupMode) return fail('signup_mode_mismatch');
       if(phoneNumberId)assets.phone_number_id=phoneNumberId;
       const businessId=payload.data.business_id || payload.data.businessId;
       if(/^\d{1,40}$/.test(businessId || '') && typeof businessId==='string') assets.business_id=businessId;

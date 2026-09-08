@@ -7,7 +7,7 @@ import WhatsAppAdmin from '../components/WhatsAppAdmin';
 import { companyInfo } from '../data/companyInfo';
 const steps=['Entrar com sua conta Meta','Selecionar o portfólio empresarial','Selecionar ou criar uma conta do WhatsApp Business','Selecionar o número','Autorizar a ESJ','Concluir integração'];
 export default function WhatsAppConnectPage(){
-  const [session,setSession]=useState(null),[data,setData]=useState(null),[busy,setBusy]=useState(true),[message,setMessage]=useState('Verificando sua sessão…'),[prepared,setPrepared]=useState(null);
+  const [session,setSession]=useState(null),[data,setData]=useState(null),[busy,setBusy]=useState(true),[message,setMessage]=useState('Verificando sua sessão…'),[prepared,setPrepared]=useState(null),[signupMode,setSignupMode]=useState('coexistence');
   const flow=useRef(null);
   const [flowActive,setFlowActive]=useState(false);
   async function refresh(){
@@ -32,7 +32,7 @@ export default function WhatsAppConnectPage(){
   }
   async function prepare(){
     setBusy(true);setPrepared(null);
-    try{const config=await apiRequest('/api/meta/whatsapp/signup/start',{});await loadMetaSDK(config);setPrepared({...config,preparedAt:Date.now()});setMessage('Tudo pronto. Clique em “Continuar com a Meta” para abrir a autorização oficial.');}
+    try{const config=await apiRequest('/api/meta/whatsapp/signup/start',{signupMode});await loadMetaSDK(config);setPrepared({...config,preparedAt:Date.now()});setMessage('Tudo pronto. Clique em “Continuar com a Meta” para abrir a autorização oficial.');}
     catch(error){setMessage(errorMessage(error));}finally{setBusy(false);}
   }
   async function connect(){
@@ -68,6 +68,10 @@ export default function WhatsAppConnectPage(){
     <section className="onboarding-panel onboarding-action"><div className="card-icon-wrapper emerald"><LockKeyhole size={26}/></div><h2>{session?session.tenant.name:'Entre na plataforma ESJ'}</h2>
       {session?<><p className="onboarding-small">{session.user.email} · Administrador</p>{data&&<ConnectionStatus status={data.status}/>}
         <p>Use uma conta Meta com permissão para administrar o portfólio empresarial e o WhatsApp que deseja integrar.</p>
+        <fieldset className="signup-mode-options" disabled={busy||Boolean(prepared)}><legend>Como deseja conectar este número?</legend>
+          <label className={signupMode==='coexistence'?'selected':''}><input type="radio" name="signup-mode" value="coexistence" checked={signupMode==='coexistence'} onChange={()=>setSignupMode('coexistence')}/><span><strong>Usar meu WhatsApp Business atual</strong><em>Recomendado</em><small>Quando elegível pela Meta, o mesmo número continua no WhatsApp Business App e também é conectado à API oficial.</small></span></label>
+          <label className={signupMode==='cloud_api'?'selected':''}><input type="radio" name="signup-mode" value="cloud_api" checked={signupMode==='cloud_api'} onChange={()=>setSignupMode('cloud_api')}/><span><strong>Usar um número dedicado à Cloud API</strong><small>Para um número novo ou dedicado à plataforma.</small></span></label>
+        </fieldset>
         {!prepared?<button className="btn btn-secondary" disabled={busy||!data?.canConnect} onClick={prepare}>{busy?'Preparando…':'Preparar conexão'}</button>:<button className="btn btn-whatsapp" disabled={busy} onClick={connect}>{busy?'Autorização em andamento…':'Continuar com a Meta'}<ArrowRight size={18}/></button>}
         {flowActive&&<button className="btn btn-secondary btn-sm" onClick={()=>flow.current?.abort()}>Cancelar tentativa</button>}
         <button className="btn btn-secondary btn-sm" disabled={busy} onClick={logout}>Sair da plataforma</button>
