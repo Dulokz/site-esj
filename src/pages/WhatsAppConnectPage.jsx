@@ -64,6 +64,7 @@ export default function WhatsAppConnectPage(){
   return <div className="legal-page-wrapper onboarding-page"><div className="container">
     <a className="onboarding-back" href="/whatsapp-business">← WhatsApp Business</a>
     <div className="onboarding-heading"><span className="section-badge emerald"><MessageCircle size={15}/> Integração oficial</span><h1>Conecte sua empresa ao WhatsApp Business</h1><p>Autorize a ESJ pela Meta para integrar o WhatsApp da sua empresa aos seus sistemas e processos. Sua empresa mantém a titularidade da conta e do número.</p></div>
+    {session&&data?.connections?.some((connection)=>connection.status==='connected')&&<WhatsAppAdmin connections={data.connections} tenantName={data.tenantName || session.tenant?.name} refresh={refresh}/>}
     <div className="onboarding-grid"><section className="onboarding-panel"><h2>Como será a conexão</h2><p>Depois de entrar na ESJ, você realizará estas etapas no ambiente da Meta.</p><ol className="onboarding-steps">{steps.map((step,index)=><li key={step}><span aria-hidden="true">{index+1}</span><div>{step}</div></li>)}</ol></section>
     <section className="onboarding-panel onboarding-action"><div className="card-icon-wrapper emerald"><LockKeyhole size={26}/></div><h2>{session?session.tenant.name:'Entre na plataforma ESJ'}</h2>
       {session?<><p className="onboarding-small">{session.user.email} · Administrador</p>{data&&<ConnectionStatus status={data.status}/>}
@@ -79,6 +80,6 @@ export default function WhatsAppConnectPage(){
       <div className="onboarding-notice" role="status"><Info size={20}/><p>{message}</p></div>
       <p className="onboarding-small">A coexistência com o WhatsApp Business App depende da disponibilidade e elegibilidade definidas pela Meta.</p><p className="onboarding-small">Consulte a <a href="/politica-de-privacidade">Política de Privacidade</a>, os <a href="/termos-de-uso">Termos de Uso</a> e as instruções de <a href="/exclusao-de-dados">exclusão de dados</a>.</p><a href={`mailto:${companyInfo.email}`}>Falar com a ESJ →</a>
     </section></div>
-    {session&&data&&<WhatsAppAdmin connections={data.connections} tenantName={data.tenantName || session.tenant?.name} refresh={refresh}/>}
+    {session&&data&&!data.connections?.some((connection)=>connection.status==='connected')&&<WhatsAppAdmin connections={data.connections} tenantName={data.tenantName || session.tenant?.name} refresh={refresh}/>}
   </div></div>;
 }
