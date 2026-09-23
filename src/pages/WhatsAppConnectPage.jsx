@@ -79,6 +79,6 @@ export default function WhatsAppConnectPage(){
       <div className="onboarding-notice" role="status"><Info size={20}/><p>{message}</p></div>
       <p className="onboarding-small">A coexistência com o WhatsApp Business App depende da disponibilidade e elegibilidade definidas pela Meta.</p><p className="onboarding-small">Consulte a <a href="/politica-de-privacidade">Política de Privacidade</a>, os <a href="/termos-de-uso">Termos de Uso</a> e as instruções de <a href="/exclusao-de-dados">exclusão de dados</a>.</p><a href={`mailto:${companyInfo.email}`}>Falar com a ESJ →</a>
     </section></div>
-    {session&&data&&<WhatsAppAdmin connections={data.connections} refresh={refresh}/>}
+    {session&&data&&<WhatsAppAdmin connections={data.connections} tenantName={data.tenantName || session.tenant?.name} refresh={refresh}/>}
   </div></div>;
 }

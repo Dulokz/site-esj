@@ -13,7 +13,7 @@ export async function persistWebhookRecords(tx, records) {
       // A WABA-level update can target more than one local number. Scope the durable
       // deduplication key to the local connection while retaining source-event idempotence.
       const connectionEventHash = `${record.eventHash}:${row.id}`;
-      const inserted = await tx.query('INSERT INTO webhook_events(event_hash,tenant_id,connection_id,kind,delivery_status) VALUES($1,$2,$3,$4,$5) ON CONFLICT(event_hash) DO NOTHING RETURNING connection_id', [connectionEventHash, row.tenant_id, row.id, record.kind, record.status]);
+      const inserted = await tx.query('INSERT INTO webhook_events(event_hash,tenant_id,connection_id,kind,delivery_status,message_id) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(event_hash) DO NOTHING RETURNING connection_id', [connectionEventHash, row.tenant_id, row.id, record.kind, record.status, record.messageId || null]);
       if (inserted.rowCount && record.kind === 'account_update' && record.status === 'PARTNER_REMOVED') {
         await tx.query("UPDATE whatsapp_connections SET status='reauthorization_required',updated_at=now() WHERE id=$1 AND tenant_id=$2", [row.id, row.tenant_id]);
       }

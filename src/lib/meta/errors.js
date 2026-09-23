@@ -23,6 +23,8 @@ const messages={
   asset_already_connected:'Este ativo já está vinculado a outra empresa na plataforma.',
   message_outcome_unknown:'Não foi possível confirmar o envio. Para evitar duplicidade, não reenvie: confira o destinatário e os registros antes de iniciar outro teste.',
   template_not_supported:'Selecione um template aprovado, somente de texto e sem parâmetros ou botões.',
+  message_not_found:'O registro deste envio não está disponível para a conexão selecionada.',
+  meta_request_failed:'A Meta recusou a solicitação. Confira a conexão, o template e as regras da conta.',
   registration_failed:'A Meta não confirmou o registro do número. Confira a configuração e use “Validar novamente”.',
 };
 export function errorMessage(error){return messages[error.code || error.message] || 'A operação não foi concluída. Verifique a configuração ou contate a ESJ.';}

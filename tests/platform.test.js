@@ -9,7 +9,7 @@ import {passwordHash,verifyPassword,requireOrigin,requireAdmin,hash} from '../li
 import {createSession,authenticate} from '../lib/platform/auth.js';
 import {CredentialStore,encryptCredential,decryptCredential} from '../lib/platform/credentials.js';
 import {GraphAPI} from '../lib/meta/graph.js';
-import {completeSignup,disconnectConnection,isSimpleTemplate,readManagement,sendTestMessage} from '../lib/platform/whatsapp.js';
+import {completeSignup,disconnectConnection,isSimpleTemplate,readManagement,sendTestMessage,readMessageStatus} from '../lib/platform/whatsapp.js';
 import {verifySignature,webhookRecords} from '../lib/meta/webhook.js';
 import {parseMetaEvent} from '../src/lib/meta/embedded-signup.js';
 import {api} from '../lib/platform/api.js';
@@ -29,6 +29,7 @@ before(async()=>{
   engine=new PGlite();
   await engine.exec(await readFile(new URL('../db/001-platform.sql',import.meta.url),'utf8'));
   await engine.exec(await readFile(new URL('../db/002-whatsapp-coexistence.sql',import.meta.url),'utf8'));
+  await engine.exec(await readFile(new URL('../db/003-message-webhook-status.sql',import.meta.url),'utf8'));
   db={query:async(sql,values)=>{const result=await engine.query(sql,values);return {...result,rowCount:result.affectedRows || result.rows.length};},connect:async()=>({...db,release(){}})};
   async function tenant(){
     const tenantId=randomUUID(),userId=randomUUID();
@@ -259,7 +260,8 @@ test('management and message endpoints use tenant credential; duplicate sends ar
   assert.equal(assets.waba.id,'111');assert.equal(assets.templates[0].canTest,true);
   await assert.rejects(readManagement({db,context:other,body:{connectionId}}),{code:'connection_not_found'});
   const body={connectionId,requestId:randomUUID(),recipient:'+15550000000',templateName:'test_template',language:'pt_BR',recipientAuthorized:true};
-  assert.equal((await sendTestMessage({db,context,body})).accepted,true);
+  const sent=await sendTestMessage({db,context,body});
+  assert.equal(sent.accepted,true);assert.equal(sent.messageId,'test-wamid');
   assert.equal((await sendTestMessage({db,context,body})).duplicate,true);
   assert.equal(sends,1);
   await assert.rejects(sendTestMessage({db,context,body:{...body,recipient:'+15550000001'}}),{code:'idempotency_conflict'});
@@ -268,6 +270,18 @@ test('management and message endpoints use tenant credential; duplicate sends ar
   assert.equal(JSON.stringify(ledger.rows).includes('+15550000000'),false);
   const events=await db.query("SELECT event FROM audit_events WHERE tenant_id=$1 AND event IN ('management_test_executed','message_test_sent')",[context.tenantId]);
   assert.equal(events.rowCount,2);
+});
+test('message status is isolated by tenant and only reflects persisted Meta webhook status',async(t)=>{
+  t.mock.method(globalThis,'fetch',metaFetch());
+  const row=(await db.query("SELECT id FROM whatsapp_connections WHERE tenant_id=$1 AND status='connected'",[context.tenantId])).rows[0];
+  const body={connectionId:row.id,requestId:randomUUID(),recipient:'+15550000000',templateName:'test_template',language:'pt_BR',recipientAuthorized:true};
+  const sent=await sendTestMessage({db,context,body});
+  const initial=await readMessageStatus({db,context,body:{connectionId:row.id,requestId:body.requestId}});
+  assert.equal(initial.messageId,sent.messageId);assert.equal(initial.deliveryStatus,null);
+  await persistWebhookRecords(db,[{wabaId:'111',phoneId:'222',kind:'status',status:'delivered',messageId:sent.messageId,eventHash:hash('delivered-test')}]);
+  const delivered=await readMessageStatus({db,context,body:{connectionId:row.id,requestId:body.requestId}});
+  assert.equal(delivered.deliveryStatus,'delivered');
+  await assert.rejects(readMessageStatus({db,context:other,body:{connectionId:row.id,requestId:body.requestId}}),{code:'connection_not_found'});
 });
 test('ambiguous external send is durable and never retried automatically',async(t)=>{
   let sends=0;const fixture=metaFetch();

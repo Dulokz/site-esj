@@ -185,6 +185,7 @@ para a validação de origem das requisições ao backend.
 | POST | `/api/meta/whatsapp/refresh` | Admin, Origin, validação/registro, 5/min |
 | POST | `/api/meta/whatsapp/management` | Admin, Origin, Graph, 10/min |
 | POST | `/api/meta/whatsapp/messages` | Admin, Origin, template e idempotência, 3/min |
+| POST | `/api/meta/whatsapp/messages/status` | Admin, Origin, consulta do resultado e status webhook do próprio envio |
 | POST | `/api/meta/whatsapp/disconnect` | Admin, Origin, transação e auditoria |
 | GET / POST | `/api/meta/whatsapp/webhook` | Verify token / HMAC Meta; sem sessão ESJ |
 
@@ -205,8 +206,9 @@ status e ID de mensagem, sem destinatário ou texto. Repetição do mesmo ID já
 enviado retorna o resultado, sem reenvio. Payload diferente é rejeitado. Se a
 resposta for perdida, fica unknown/sending e não há retry automático. Isso
 evita duplicidade; não promete exatamente-uma-vez entre banco e Meta.
-“Aceita pela Meta” não é “entregue”. Os webhooks armazenam metadados deduplicados
-de recebimento/status; ainda não há inbox, workflow de negócio ou tela de entrega.
+“Aceita pela Meta” não é “entregue”. A tela permite consultar manualmente o status
+do próprio envio: ela correlaciona somente Message ID, status e horário recebidos
+no webhook. Ainda não há inbox ou workflow de negócio.
 
 ## Desconexão, credenciais e manutenção
 
@@ -252,8 +254,10 @@ hash scrypt e invalidar sessões do usuário em transação por operador autoriz
 5. **whatsapp_business_management:** selecionar o número, clicar “Consultar WABA,
    números e templates”; mostrar resultado real com WABA, lista e templates.
 6. **whatsapp_business_messaging:** escolher template simples aprovado, destinatário
-   controlado e autorizado, confirmar autorização, enviar. Mostrar aceitação e o
-   recebimento real no dispositivo destinatário, sem expor contatos de terceiros.
+   controlado e autorizado, revisar a confirmação explícita, enviar. Mostrar
+   aceitação, Message ID e, após clicar em “Atualizar status”, o evento real de
+   entrega/leitura quando disponível; então mostrar o recebimento no dispositivo,
+   sem expor contatos de terceiros.
 7. Mostrar exclusão de dados, desconexão e nova autorização; explicar a diferença
    entre desconexão ESJ e revogação Meta. Gravar cancelamento e reautorização se solicitado.
 8. Conferir que as duas permissões solicitadas correspondem aos recursos demonstrados.
